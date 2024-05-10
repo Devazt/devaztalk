@@ -1,11 +1,17 @@
 import "./chat.css"
 import EmojiPicker from "emoji-picker-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 function Chat() {
 
   const [open, setOpen] = useState(false)
   const [text, setText] = useState("")
+
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [])
   const handleEmoji = (emoji: { emoji: string }) => {
     setText(prev => prev + emoji.emoji)
   }
@@ -42,12 +48,39 @@ function Chat() {
         </div>
         <div className="message own">
           <div className="texts">
+            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Earum, quasi corporis quisquam deleniti rem natus expedita accusamus autem repellendus omnis fugit sit quas ipsum a cupiditate modi odio ab voluptatum.</p>
+            <span>1 min ago</span>
+          </div>
+        </div>
+        <div className="message">
+          <img src="./avatar.png" alt="" />
+          <div className="texts">
+            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Earum, quasi corporis quisquam deleniti rem natus expedita accusamus autem repellendus omnis fugit sit quas ipsum a cupiditate modi odio ab voluptatum.</p>
+            <span>1 min ago</span>
+          </div>
+        </div>
+        <div className="message own">
+          <div className="texts">
+            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Earum, quasi corporis quisquam deleniti rem natus expedita accusamus autem repellendus omnis fugit sit quas ipsum a cupiditate modi odio ab voluptatum.</p>
+            <span>1 min ago</span>
+          </div>
+        </div>
+        <div className="message">
+          <img src="./avatar.png" alt="" />
+          <div className="texts">
+            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Earum, quasi corporis quisquam deleniti rem natus expedita accusamus autem repellendus omnis fugit sit quas ipsum a cupiditate modi odio ab voluptatum.</p>
+            <span>1 min ago</span>
+          </div>
+        </div>
+        <div className="message own">
+          <div className="texts">
             <img src="https://images.pexels.com/photos/20787/pexels-photo.jpg?auto=compress&cs=tinysrgb&h=350
 " alt="" />
             <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Earum, quasi corporis quisquam deleniti rem natus expedita accusamus autem repellendus omnis fugit sit quas ipsum a cupiditate modi odio ab voluptatum.</p>
             <span>1 min ago</span>
           </div>
         </div>
+      <div ref={endRef}></div>
       </div>
       <div className="bottom">
         <div className="icons">

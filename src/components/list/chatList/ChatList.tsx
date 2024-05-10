@@ -1,9 +1,9 @@
-import { useState } from "react"
-import "./chatList.css"
+import { useState } from "react";
+import "./chatList.css";
+import AddUser from "./addUser/AddUser";
 
 function ChatList() {
-
-  const [addMode, setAddmode] = useState(false)
+  const [addMode, setAddmode] = useState(false);
   return (
     <div className="chatList">
       <div className="search">
@@ -11,8 +11,12 @@ function ChatList() {
           <img src="./search.png" alt="" />
           <input type="text" placeholder="Search" />
         </div>
-        <img src={addMode ? "./minus.png" : "./plus.png"} alt="" className="add"
-          onClick={() => setAddmode(!addMode)}/>
+        <img
+          src={addMode ? "./minus.png" : "./plus.png"}
+          alt=""
+          className="add"
+          onClick={() => setAddmode(!addMode)}
+        />
       </div>
       <div className="item">
         <img src="./avatar.png" alt="" />
@@ -70,8 +74,9 @@ function ChatList() {
           <p>Hello</p>
         </div>
       </div>
+      {addMode && <AddUser />}
     </div>
-  )
+  );
 }
 
-export default ChatList
+export default ChatList;
