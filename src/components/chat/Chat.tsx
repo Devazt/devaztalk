@@ -11,13 +11,18 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../../lib/firebase";
 import { useChatStore } from "../../lib/chatStore";
 import { useUserStore } from "../../lib/userStore";
+import upload from "../../lib/upload";
 
 function Chat() {
   const [chat, setChat] = useState();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [img, setImg] = useState<{ file: File | null; url: string }>({
+    file: null,
+    url: "",
+  });
 
-  const { chatId, user } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
   const { currentUser } = useUserStore();
 
   const endRef = useRef<HTMLDivElement>(null);
@@ -40,15 +45,39 @@ function Chat() {
     setText((prev) => prev + emoji.emoji);
   };
 
+  const handleImg = (e) => {
+    if (e.target.files) {
+      if (e.target.files[0]) {
+        setImg({
+          file:
+            e.target.files && e.target.files.length > 0
+              ? e.target.files[0]
+              : null,
+          url:
+            e.target.files && e.target.files.length > 0
+              ? URL.createObjectURL(e.target.files[0])
+              : "",
+        });
+      }
+    }
+  };
+
   const handleSend = async () => {
     if (text === "") return;
 
+    let imgUrl = null;
+
     try {
+      if (img.file) {
+        imgUrl = await upload(img.file);
+      }
+
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
           senderId: currentUser.id,
           text,
           createdAt: new Date(),
+          ...(imgUrl && { img: imgUrl }),
         }),
       });
 
@@ -61,20 +90,19 @@ function Chat() {
         if (userChatsSnapshot.exists()) {
           const userChatsData = userChatsSnapshot.data();
 
-          const chatIndex = userChatsData.chats.findIndex(
-            (c) => c.chatId === chatId
-          ) ?? -1;
+          const chatIndex =
+            userChatsData.chats.findIndex((c) => c.chatId === chatId) ?? -1;
 
           if (chatIndex !== -1) {
             if (!userChatsData.chats) {
               userChatsData.chats = [];
             }
-  
+
             userChatsData.chats[chatIndex].lastMessage = text;
             userChatsData.chats[chatIndex].isSeen =
               id === currentUser.id ? true : false;
             userChatsData.chats[chatIndex].updatedAt = Date.now();
-  
+
             await updateDoc(userChatsRef, {
               chats: userChatsData.chats,
             });
@@ -85,6 +113,7 @@ function Chat() {
       console.log(error);
     } finally {
       setText("");
+      setImg({ file: null, url: "" });
     }
   };
 
@@ -92,9 +121,9 @@ function Chat() {
     <div className="chat">
       <div className="top">
         <div className="user">
-          <img src="./avatar.png" alt="" />
+          <img src={user?.avatar || "./avatar.png"} alt="" />
           <div className="texts">
-            <span>Jane Doe</span>
+            <span>{user?.username}</span>
             <p>Lorem ipsum dolor sit amet.</p>
           </div>
         </div>
@@ -119,19 +148,30 @@ function Chat() {
             </div>
           </div>
         ))}
+        {img.url && (
+          <div className="message own">
+            <div className="texts">
+              <img src={img.url} alt="" />
+            </div>
+          </div>
+        )}
         <div ref={endRef}></div>
       </div>
       <div className="bottom">
         <div className="icons">
-          <img src="./img.png" alt="" />
+          <label htmlFor="file">
+            <img src="./img.png" alt="" />
+          </label>
+          <input type="file" style={{ display: "none" }} onChange={handleImg} id  ="file" />
           <img src="./camera.png" alt="" />
           <img src="./mic.png" alt="" />
         </div>
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder={isCurrentUserBlocked || isReceiverBlocked ? "You can't send message" : "Type a message..."}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          disabled={isCurrentUserBlocked || isReceiverBlocked}
         />
         <div className="emoji">
           <img src="./emoji.png" alt="" onClick={() => setOpen(!open)} />
@@ -139,7 +179,7 @@ function Chat() {
             <EmojiPicker open={open} onEmojiClick={handleEmoji} />
           </div>
         </div>
-        <button className="sendButton" onClick={handleSend}>
+        <button className="sendButton" onClick={handleSend} disabled={isCurrentUserBlocked || isReceiverBlocked}>
           Send
         </button>
       </div>
