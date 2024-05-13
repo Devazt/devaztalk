@@ -5,22 +5,27 @@ import { useUserStore } from "../../../lib/userStore";
 import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useChatStore } from "../../../lib/chatStore";
+import { User, UserChats } from "../../../lib/interface";
+
+interface ChatStoreState {
+  changeChat: (chatId: string, user: User) => void;
+}
 
 function ChatList() {
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState<UserChats[]>([]);
   const [addMode, setAddmode] = useState(false);
   const [input, setInput] = useState("");
 
   const { currentUser } = useUserStore();
-  const { chatId, changeChat } = useChatStore();
+  const { changeChat } = useChatStore() as ChatStoreState;
 
   useEffect(() => {
     const unSub = onSnapshot(
-      doc(db, "userchats", currentUser?.id),
+      doc(db, "userchats", currentUser?.id ?? ""),
       async (res) => {
         const items = res.data()?.chats;
 
-        const promises = items.map(async (item) => {
+        const promises = items.map(async (item: UserChats) => {
           const userDocRef = doc(db, "users", item.receiverId);
           const userDocSnap = await getDoc(userDocRef);
           const user = userDocSnap.data();
@@ -38,9 +43,10 @@ function ChatList() {
     };
   }, [currentUser?.id]);
 
-  const handleSelect = async (chat) => {
+  const handleSelect = async (chat: UserChats) => {
     const userChats = chats.map((item) => {
-      const { user, ...rest } = item;
+      const { ...rest } = item;
+
       return rest;
     });
 
@@ -50,7 +56,7 @@ function ChatList() {
 
     userChats[chatIndex].isSeen = true;
 
-    const userChatRef = doc(db, "userchats", currentUser?.id);
+    const userChatRef = doc(db, "userchats", currentUser?.id ?? "");
 
     try {
       await updateDoc(userChatRef, {
@@ -66,15 +72,16 @@ function ChatList() {
     return chat.user.username.toLowerCase().includes(input.toLowerCase());
   });
 
-  console.log(filteredChats);
-  
-
   return (
     <div className="chatList">
       <div className="search">
         <div className="searchBar">
           <img src="./search.png" alt="" />
-          <input type="text" placeholder="Search" onChange={(e) => setInput(e.target.value)} />
+          <input
+            type="text"
+            placeholder="Search"
+            onChange={(e) => setInput(e.target.value)}
+          />
         </div>
         <img
           src={addMode ? "./minus.png" : "./plus.png"}
@@ -83,16 +90,27 @@ function ChatList() {
           onClick={() => setAddmode(!addMode)}
         />
       </div>
-      {filteredChats.map((chat: any) => (
+      {filteredChats.map((chat: UserChats) => (
         <div
           className="item"
           key={chat?.chatId}
           onClick={() => handleSelect(chat)}
           style={{ backgroundColor: chat?.isSeen ? "transparent" : "#5183fe" }}
         >
-          <img src={chat.user.blocked.includes(currentUser?.id) ? "./avatar.png" : chat?.user?.avatar || "./avatar.png"} alt="" />
+          <img
+            src={
+              chat.user.blocked.includes(currentUser?.id ?? "")
+                ? "./avatar.png"
+                : chat?.user?.avatar || "./avatar.png"
+            }
+            alt=""
+          />
           <div className="texts">
-            <span>{chat.user.blocked.includes(currentUser?.id) ? "User" : chat?.user?.username}</span>
+            <span>
+              {chat.user.blocked.includes(currentUser?.id ?? "")
+                ? "User"
+                : chat?.user?.username}
+            </span>
             <p>{chat?.lastMessage}</p>
           </div>
         </div>

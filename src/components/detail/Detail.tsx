@@ -3,13 +3,23 @@ import { useChatStore } from "../../lib/chatStore";
 import { auth, db } from "../../lib/firebase";
 import "./detail.css";
 import { useUserStore } from "../../lib/userStore";
+import { User } from "../../lib/interface";
+
+interface ChatStoreState {
+  user: User | null;
+  isCurrentUserBlocked: boolean;
+  isReceiverBlocked: boolean;
+  changeBlock: () => void;
+}
 
 function Detail() {
-  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeBlock } =
-    useChatStore();
+  const { user, isCurrentUserBlocked, isReceiverBlocked, changeBlock } =
+    useChatStore() as ChatStoreState;
   const { currentUser } = useUserStore();
   const handleBlock = async () => {
     if (!user) return;
+
+    if (!currentUser) return;
 
     const userDocRef = doc(db, "users", currentUser.id);
 
